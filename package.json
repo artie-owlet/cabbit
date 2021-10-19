@@ -1,0 +1,48 @@
+{
+  "name": "@artie-owlet/cabbit",
+  "version": "1.0.0-dev.0",
+  "description": "Package for easy consuming messages from RabbitMQ",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist/",
+    "lint": "eslint --cache --ext .js,.jsx,.ts,.tsx src/ test/",
+    "test": "mocha -r ts-node/register test/*.ts",
+    "coverage": "nyc npm run test",
+    "doc": "typedoc"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@artie-owlet/amqp-routing-match": "^1.0.0",
+    "@artie-owlet/amqplib-wrapper": "^1.2.2"
+  },
+  "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@types/amqplib": "^0.8.1",
+    "@types/chai": "^4.2.21",
+    "@types/chai-as-promised": "^7.1.4",
+    "@types/mocha": "^8.2.3",
+    "@types/node": "^14.17.5",
+    "@types/qs": "^6.9.7",
+    "@typescript-eslint/eslint-plugin": "^4.28.2",
+    "@typescript-eslint/parser": "^4.28.2",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^7.30.0",
+    "mocha": "^9.0.2",
+    "nyc": "^15.1.0",
+    "qs": "^6.10.1",
+    "ts-node": "^10.1.0",
+    "typedoc": "^0.22.6",
+    "typedoc-plugin-markdown": "^3.11.3",
+    "typescript": "^4.3.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artie-owlet/cabbit.git"
+  }
+}

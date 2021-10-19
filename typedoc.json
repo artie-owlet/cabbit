@@ -1,0 +1,12 @@
+{
+  "entryPoints": [
+    "./src/index.ts"
+  ],
+  "readme": "none",
+  "out": "./doc/api",
+  "entryDocument": "api.md",
+  "name": "API",
+  "disableSources": true,
+  "excludePrivate": true,
+  "excludeExternals": true
+}
