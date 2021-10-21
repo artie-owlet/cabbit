@@ -3,7 +3,6 @@ import { IConnectOptions } from '@artie-owlet/amqplib-wrapper';
 
 import { ContentDecoder, ContentMimeTypeParser } from './content-parser';
 import { IMessage, IMessageHeaders } from './message';
-import { INEE } from './named-event-emitter';
 
 export type IExchangeOptions = Pick<AmqplibOptions.AssertExchange, 'internal' | 'durable' | 'autoDelete'>;
 
@@ -19,23 +18,6 @@ export type ConsumeMiddleware<T> = (msg: IMessage<T>) => void;
 export interface IRoutingHeaders extends IMessageHeaders {
     'x-match': 'all' | 'any';
 }
-
-/**
- * Extends IConnectOptions from [amqplib-wrapper](https://github.com/artie-owlet/amqplib-wrapper#connectionwrapper)
- */
-export interface IConsumeManagerOptions extends IConnectOptions {
-    /**
-     * Declare exchanges and queues with `passive` option
-     */
-    passive?: boolean;
-}
-
-type ICabbitBase =
-    INEE<'close', () => void> &
-    INEE<'error', (err: Error) => void> &
-    INEE<'setup', () => void> &
-    INEE<'setupFailed', (err: Error) => void> &
-    INEE<'unhandledMessage', (msg: IMessage<any>, queue: string | number) => void>;
 
 export interface ICabbit extends ICabbitBase {
     queue(): IQueue;
