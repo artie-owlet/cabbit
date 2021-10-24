@@ -18,7 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "@artie-owlet/amqp-routing-match": "^1.0.0",
-    "@artie-owlet/amqplib-wrapper": "^1.2.2"
+    "@artie-owlet/amqplib-wrapper": "^1.2.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

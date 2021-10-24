@@ -1,9 +1,9 @@
 import EventEmitter from 'events';
 
 import { IChannelWrapper } from '@artie-owlet/amqplib-wrapper';
-import { Channel, Message as AmqplibMessage } from 'amqplib';
+import { Channel, ConsumeMessage as AmqplibMessage } from 'amqplib';
 
-import { ChannelHandler } from './channel-handler';
+import { IChannelHandler } from './message';
 import {
     IExchangeOptions,
     IQueueDeclareOptions,
@@ -28,7 +28,7 @@ export interface IQueueOptionsStrict {
     declare: IQueueDeclareOptionsStrict,
     consume: IQueueConsumeOptionsStrict,
 }
-type ConsumeCallback = (chanHandler: ChannelHandler, msg: AmqplibMessage | null) => void;
+type ConsumeCallback = (chanHandler: IChannelHandler, msg: AmqplibMessage | null) => void;
 interface IQueueData {
     name: string;
     opts: IQueueOptionsStrict;
@@ -46,10 +46,12 @@ interface IBinding<T> {
 type IExchangeBinding = IBinding<string>;
 type IQueueBinding = IBinding<string | number>;
 
-type Task = (chan: Channel, chanHandler: ChannelHandler) => Promise<void>;
+type Task = (chan: Channel, chanHandler: IChannelHandler) => Promise<void>;
 
 export class Client extends EventEmitter {
-    private chanHandlerCache = new WeakMap<Channel, ChannelHandler>();
+    private chanHandler: IChannelHandler = {
+        chan: null,
+    };
     private exchanges = new Map<string, IExchangeData>();
     private queues = new Map<string | number, IQueueData>();
     private tmpQueueId = 0;
@@ -64,58 +66,34 @@ export class Client extends EventEmitter {
         private passive: boolean,
     ) {
         super();
-        chanWrap.on('open', this.onOpen.bind(this));
         chanWrap.on('close', this.onClose.bind(this));
     }
 
     public declareExchange(name: string, exType: ExchangeType, options: IExchangeOptionsStrict): void {
-        const ex = this.exchanges.get(name);
-        if (ex) {
-            if (exType !== ex.exType) {
-                throw new Error(`Cannot create exchange ${name}: type mismatch`);
-            }
-            let key: keyof IExchangeOptionsStrict;
-            for (key in options) {
-                if (options[key] !== ex.opts[key]) {
-                    throw new Error(`Cannot create exchange ${name}: options mismatch`);
-                }
-            }
-        } else {
-            const exData: IExchangeData = {
-                exType,
-                opts: options,
-                declared: false,
-            };
-            this.exchanges.set(name, exData);
-            this.deferDeclareExchange(name, exData);
+        if (this.exchanges.has(name)) {
+            throw new Error(`Exchange "${name}" already created`);
         }
+        const exData: IExchangeData = {
+            exType,
+            opts: options,
+            declared: false,
+        };
+        this.exchanges.set(name, exData);
+        this.deferDeclareExchange(name, exData);
     }
 
     public declareQueue(name: string, options: IQueueOptionsStrict, cb: ConsumeCallback): void {
-        const queue = this.queues.get(name);
-        if (queue) {
-            let dkey: keyof IQueueDeclareOptionsStrict;
-            for (dkey in options.declare) {
-                if (options.declare[dkey] !== queue.opts.declare[dkey]) {
-                    throw new Error(`Cannot create queue ${name}: declare options mismatch`);
-                }
-            }
-            let ckey: keyof IQueueConsumeOptionsStrict;
-            for (ckey in options.consume) {
-                if (options.consume[ckey] !== queue.opts.consume[ckey]) {
-                    throw new Error(`Cannot create queue ${name}: consume options mismatch`);
-                }
-            }
-        } else {
-            const queueData: IQueueData = {
-                name,
-                opts: options,
-                cb,
-                declared: false,
-            };
-            this.queues.set(name, queueData);
-            this.deferDeclareQueue(name, queueData);
+        if (this.queues.has(name)) {
+            throw new Error(`Queue "${name} already created`);
         }
+        const queueData: IQueueData = {
+            name,
+            opts: options,
+            cb,
+            declared: false,
+        };
+        this.queues.set(name, queueData);
+        this.deferDeclareQueue(name, queueData);
     }
 
     public declareTmpQueue(cb: ConsumeCallback, noAck: boolean): number {
@@ -213,7 +191,7 @@ export class Client extends EventEmitter {
     }
 
     private deferDeclareQueue(name: string, queueData: IQueueData): void {
-        this.deferSetup(async (chan: Channel, chanHandler: ChannelHandler): Promise<void> => {
+        this.deferSetup(async (chan: Channel, chanHandler: IChannelHandler): Promise<void> => {
             if (this.passive) {
                 await chan.checkQueue(name);
             } else {
@@ -225,7 +203,7 @@ export class Client extends EventEmitter {
     }
 
     private deferDeclareTmpQueue(queueData: IQueueData): void {
-        this.deferSetup(async (chan: Channel, chanHandler: ChannelHandler): Promise<void> => {
+        this.deferSetup(async (chan: Channel, chanHandler: IChannelHandler): Promise<void> => {
             const {queue: name} = await chan.assertQueue('', Object.assign({
                 exclusive: true,
             }, queueData.opts.declare));
@@ -266,14 +244,17 @@ export class Client extends EventEmitter {
             if (!chan) {
                 throw new Error('Cannot create channel');
             }
-            /* istanbul ignore next: else */
-            const chanHandler = this.chanHandlerCache.get(chan) || new ChannelHandler(chan);
-            this.chanHandlerCache.set(chan, chanHandler);
+            if (this.chanHandler.chan !== chan) {
+                this.chanHandler.chan = null;
+                this.chanHandler = {
+                    chan,
+                };
+            }
             while (this.setupTasks.length > 0) {
                 const tasks = this.setupTasks;
                 this.setupTasks = [];
                 for (let i = 0; i < tasks.length; ++i) {
-                    await tasks[i](chan, chanHandler);
+                    await tasks[i](chan, this.chanHandler);
                 }
             }
             this.emit('setup');
@@ -285,37 +266,31 @@ export class Client extends EventEmitter {
         }
     }
 
-    private onOpen(chan: Channel): void {
-        const chanHandler = this.chanHandlerCache.get(chan) || new ChannelHandler(chan);
-        this.chanHandlerCache.set(chan, chanHandler);
-    }
-
     private onClose(): void {
-        if (this.closed) {
-            this.emit('close');
-            return;
-        }
+        this.chanHandler.chan = null;
 
-        Array.from(this.exchanges.entries()).forEach(([name, exData]) => {
-            exData.declared = false;
-            this.deferDeclareExchange(name, exData);
-        });
-        Array.from(this.queues.entries()).forEach(([name, queueData]) => {
-            queueData.declared = false;
-            if (typeof name === 'string') {
-                this.deferDeclareQueue(name, queueData);
-            } else {
-                this.deferDeclareTmpQueue(queueData);
-            }
-        });
-        this.exBindings.forEach((b) => {
-            b.bound = false;
-            this.deferBindExchange(b);
-        });
-        this.queueBindings.forEach((b) => {
-            b.bound = false;
-            this.deferBindQueue(b);
-        });
+        if (!this.closed) {
+            Array.from(this.exchanges.entries()).forEach(([name, exData]) => {
+                exData.declared = false;
+                this.deferDeclareExchange(name, exData);
+            });
+            Array.from(this.queues.entries()).forEach(([name, queueData]) => {
+                queueData.declared = false;
+                if (typeof name === 'string') {
+                    this.deferDeclareQueue(name, queueData);
+                } else {
+                    this.deferDeclareTmpQueue(queueData);
+                }
+            });
+            this.exBindings.forEach((b) => {
+                b.bound = false;
+                this.deferBindExchange(b);
+            });
+            this.queueBindings.forEach((b) => {
+                b.bound = false;
+                this.deferBindQueue(b);
+            });
+        }
 
         this.emit('close');
     }

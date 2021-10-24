@@ -11,6 +11,7 @@ import {
     DirectExchange,
     TopicExchange,
     HeadersExchange,
+    CustomExchange,
 } from './exchange';
 import { Message } from './message';
 import { ConsumeMiddleware, IQueueOptions, Queue } from './queue';
@@ -93,5 +94,91 @@ export class Cabbit extends EventEmitter implements ICabbitEventEmitter {
         this.client.on('close', () => this.emit('close'));
     }
 
-    public queue(name: string, mw: )
+    /**
+     * Create named queue and start consume to provided middleware
+     */
+    public queue<T = any>(name: string, mw: ConsumeMiddleware<T>, opts?: IQueueOptions): Queue;
+    /**
+     * Create temporary queue and start consume to provided middleware
+     */
+    public queue<T = any>(mw: ConsumeMiddleware<T>, noAck?: boolean): Queue;
+    public queue<T = any>(...args: any[]): Queue {
+        if (typeof args[0] === 'string') {
+        } else {
+        }
+    }
+
+    /**
+     * Create fanout exchange
+     */
+    fanout(name: string, options?: IExchangeOptions): FanoutExchange {
+        return new FanoutExchange(this.client, this.contentParser, name, false, options);
+    }
+
+    /**
+     * Create direct exchange
+     */
+    direct(name: string, options?: IExchangeOptions): DirectExchange {
+        return new DirectExchange(this.client, this.contentParser, name, false, options);
+    }
+
+    /**
+     * Create topic exchange
+     */
+    topic(name: string, options?: IExchangeOptions): TopicExchange {
+        return new TopicExchange(this.client, this.contentParser, name, false, options);
+    }
+
+    /**
+     * Create headers exchange
+     */
+    headers(name: string, options?: IExchangeOptions): HeadersExchange {
+        return new HeadersExchange(this.client, this.contentParser, name, false, options);
+    }
+
+    /**
+     * Create exchange with custom type
+     */
+    exchange(name: string, exType: string, options?: IExchangeOptions): CustomExchange {
+        return new CustomExchange(this.client, this.contentParser, name, exType, false, options);
+    }
+
+    /**
+     * Finish work, close underlying channel
+     */
+    async close(): Promise<void> {
+        if (this.conn) {
+            await this.client.close();
+            return this.conn.close();
+        }
+        return this.client.close();
+    }
+
+    /**
+     * Set decoder for messages with specified encoding
+     */
+    setDecoder(encoding: string, decode: ContentDecoder): void {
+        this.contentParser.setDecoder(encoding, decode);
+    }
+
+    /**
+     * Set decoder for mesages with unknown encoding
+     */
+    setDefaultDecoder(decode: ContentDecoder): void {
+        this.contentParser.setDefaultDecoder(decode);
+    }
+
+    /**
+     * Set parser for messages with specified MIME type
+     */
+    setParser(mimeType: string, parse: ContentMimeTypeParser): void {
+        this.contentParser.setParser(mimeType, parse);
+    }
+
+    /**
+     * Set parser for messages with unknown MIME type
+     */
+    setDefaultParser(parse: ContentMimeTypeParser): void {
+        this.contentParser.setDefaultParser(parse);
+    }
 }

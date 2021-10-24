@@ -1,61 +1,43 @@
-import { Message as AmqplibMessage } from 'amqplib';
+import { Channel, ConsumeMessage as AmqplibMessage, ConsumeMessageFields, MessageProperties } from 'amqplib';
 
-import { ChannelHandler } from './channel-handler';
-import { ParseContent } from './content-parser';
+import { ContentParser } from './content-parser';
 
-export interface IMessageHeaders {
-    [key: string]: any;
+export interface IChannelHandler {
+    chan: Channel | null;
 }
 
-export interface IMessage<T = any> {
+export class Message<T> {
     /**
      * Decoded and parsed message body
      */
-    readonly body?: T;
+    public readonly body?: T;
     /**
      * Describes decoding or parsing error
      */
-    readonly parseError?: string;
-    /**
-     * Headers set by publisher
-     */
-    readonly appHeaders: IMessageHeaders;
-    /**
-     * Headers set by RabbitMQ
-     */
-    readonly xHeaders: IMessageHeaders;
-    /**
-     * Raw amqplib message
-     */
-    readonly amqplibMessage: AmqplibMessage;
-    /**
-     * Acknowledge message
-     * @param allUpTo acknowledge all unacknowledged messages consumed before (default false)
-     */
-    ack(allUpTo?: boolean): boolean;
-    /**
-     * Reject message
-     * @param allUpTo reject all unacknowledged messages consumed before (default false)
-     * @param requeue push rejected message(s) back on the queue(s) they came from (default false)
-     */
-    nack(allUpTo?: boolean, requeue?: boolean): boolean;
-}
-
-export class Message<T = any> implements IMessage<T> {
-    public readonly body?: T;
     public readonly parseError?: string;
-    public readonly exchange: string;
-    public readonly routingKey: string;
-    public readonly appHeaders = {} as IMessageHeaders;
-    public readonly xHeaders = {} as IMessageHeaders;
+    /**
+     * Message fields
+     */
+    public readonly fields: ConsumeMessageFields;
+    /**
+     * Message properties
+     */
+    public readonly properties: MessageProperties;
+    /**
+     * Raw message content
+     */
+    public readonly rawContent: Buffer;
 
+    /**
+     * @hidden
+     */
     constructor(
-        public readonly amqplibMessage: AmqplibMessage,
-        private chan: ChannelHandler,
-        parseContent: ParseContent,
+        private amqplibMessage: AmqplibMessage,
+        private chanHandler: IChannelHandler,
+        parser: ContentParser,
     ) {
         try {
-            this.body = parseContent(amqplibMessage.content,
+            this.body = parser.parse(amqplibMessage.content,
                 amqplibMessage.properties.contentEncoding,
                 amqplibMessage.properties.contentType) as T;
         } catch (err) {
@@ -63,22 +45,33 @@ export class Message<T = any> implements IMessage<T> {
             this.parseError = err instanceof Error ? err.message : String(err);
         }
 
-        this.exchange = amqplibMessage.fields.exchange;
-        this.routingKey = amqplibMessage.fields.routingKey;
-        for (const key in amqplibMessage.properties.headers) {
-            if (key.startsWith('x-') || key.startsWith('X-')) {
-                this.xHeaders[key.slice(2).toLowerCase()] = amqplibMessage.properties.headers[key] as unknown;
-            } else {
-                this.appHeaders[key] = amqplibMessage.properties.headers[key] as unknown;
-            }
-        }
+        this.fields = amqplibMessage.fields;
+        this.properties = amqplibMessage.properties;
+        this.rawContent = amqplibMessage.content;
     }
 
+    /**
+     * Acknowledge message
+     * @param allUpTo acknowledge all unacknowledged messages consumed before (default false)
+     */
     public ack(allUpTo = false): boolean {
-        return this.chan.ack(this.amqplibMessage, allUpTo);
+        if (this.chanHandler.chan) {
+            this.chanHandler.chan.ack(this.amqplibMessage, allUpTo);
+            return true;
+        }
+        return false;
     }
 
+    /**
+     * Reject message
+     * @param allUpTo reject all unacknowledged messages consumed before (default false)
+     * @param requeue push rejected message(s) back on the queue(s) they came from (default false)
+     */
     public nack(allUpTo = false, requeue = false): boolean {
-        return this.chan.nack(this.amqplibMessage, allUpTo, requeue);
+        if (this.chanHandler.chan) {
+            this.chanHandler.chan.nack(this.amqplibMessage, allUpTo, requeue);
+            return true;
+        }
+        return true;
     }
 }
