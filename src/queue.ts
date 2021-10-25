@@ -1,10 +1,16 @@
 import { ConsumeMessage as AmqplibMessage } from 'amqplib';
 
-import { Client, IQueueOptionsStrict } from './client';
+import { Client, IArguments, IQueueOptions, IQueueOptionsStrict, IChannelHandler } from './client';
 import { ContentParser } from './content-parser';
-import { FanoutExchange, DirectExchange, TopicExchange, HeadersExchange, CustomExchange } from './exchange';
-import { IChannelHandler, Message } from './message';
-import { IQueueOptions, IRoutingHeaders, IArguments } from './types';
+import {
+    FanoutExchange,
+    DirectExchange,
+    TopicExchange,
+    HeadersExchange,
+    CustomExchange,
+    IRoutingHeaders,
+} from './exchange';
+import { Message } from './message';
 
 export type ConsumeMiddleware<T> = (msg: Message<T>) => void;
 
@@ -30,7 +36,11 @@ const namedQueueOptions: IQueueOptionsStrict = {
 };
 
 export class Queue<T> {
-    private readonly name: string | number;
+    /**
+     * @hidden
+     */
+    public readonly name: string | number;
+
     private middleware: ConsumeMiddleware<T>;
 
     /**
@@ -74,7 +84,7 @@ export class Queue<T> {
         return this;
     }
 
-    public subscribe(ex: CustomExchange, routingKey: string, args: IArguments): this {
+    public subscribe(ex: CustomExchange, routingKey?: string, args?: IArguments): this {
         return this;
     }
 

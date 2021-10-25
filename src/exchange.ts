@@ -1,18 +1,20 @@
-import { Client, ExchangeType } from './client';
+import { Client, IArguments, IExchangeOptions, IExchangeOptionsStrict, IQueueOptions } from './client';
 import { ContentParser } from './content-parser';
 import { ConsumeMiddleware, Queue } from './queue';
-import {
-    IExchangeOptions,
-    IQueueOptions,
-    IRoutingHeaders,
-} from './types';
 
-class BaseChannel {
+export interface IRoutingHeaders extends IArguments {
+    'x-match': 'all' | 'any';
+}
+
+class BaseExchange {
     constructor(
         private client: Client,
         private parser: ContentParser,
+        /**
+         * @hidden
+         */
         public readonly name: string,
-        exType: ExchangeType,
+        exType: string,
         internal: boolean,
         opts: IExchangeOptions | undefined,
     ) {
@@ -23,5 +25,5 @@ class BaseChannel {
         }, opts));
     }
 
-    protected consumeImpl
+    protected bindImpl(dest: BaseExchange | Queue<any>, routingKey?: string, args?: IArguments)
 }

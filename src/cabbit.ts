@@ -3,12 +3,11 @@ import { URL } from 'url';
 
 import { ConnectionWrapper, IConnectionWrapper, IConnectOptions } from '@artie-owlet/amqplib-wrapper';
 
-import { Client } from './client';
+import { Client, IExchangeOptions, IQueueOptions } from './client';
 import { ContentDecoder, ContentMimeTypeParser, ContentParser } from './content-parser';
 import { FanoutExchange, DirectExchange, TopicExchange, HeadersExchange, CustomExchange } from './exchange';
 import { Message } from './message';
 import { ConsumeMiddleware, Queue } from './queue';
-import { IExchangeOptions, IQueueOptions } from './types';
 
 interface ICabbitEvents {
     close: () => void;
@@ -91,14 +90,21 @@ export class Cabbit extends EventEmitter implements ICabbitEventEmitter {
     /**
      * Create named queue and start consume to provided middleware
      */
-    public queue<T = any>(name: string, mw: ConsumeMiddleware<T>, opts?: IQueueOptions): Queue;
+    public queue<T = any>(name: string, mw: ConsumeMiddleware<T>, opts?: IQueueOptions): Queue<T>;
     /**
      * Create temporary queue and start consume to provided middleware
      */
-    public queue<T = any>(mw: ConsumeMiddleware<T>, noAck?: boolean): Queue;
-    public queue<T = any>(...args: any[]): Queue {
+    public queue<T = any>(mw: ConsumeMiddleware<T>, noAck?: boolean): Queue<T>;
+    public queue<T = any>(...args: any[]): Queue<T> {
         if (typeof args[0] === 'string') {
+            const name = args[0];
+            const mw = args[1] as ConsumeMiddleware<T>;
+            const opts = args[2] as IQueueOptions | undefined;
+            return new Queue<T>(this.client, this.contentParser, name, mw, opts);
         } else {
+            const mw = args[0] as ConsumeMiddleware<T>;
+            const noAck = args[1] as boolean | undefined;
+            return new Queue<T>(this.client, this.contentParser, mw, noAck);
         }
     }
 

@@ -1,10 +1,7 @@
-import { Channel, ConsumeMessage as AmqplibMessage, ConsumeMessageFields, MessageProperties } from 'amqplib';
+import { ConsumeMessage as AmqplibMessage, ConsumeMessageFields, MessageProperties } from 'amqplib';
 
+import { IChannelHandler } from './client';
 import { ContentParser } from './content-parser';
-
-export interface IChannelHandler {
-    chan: Channel | null;
-}
 
 export class Message<T> {
     /**

@@ -1,33 +1,46 @@
 import EventEmitter from 'events';
 
 import { IChannelWrapper } from '@artie-owlet/amqplib-wrapper';
-import { Channel, ConsumeMessage as AmqplibMessage } from 'amqplib';
-
-import { IChannelHandler } from './message';
-import {
-    IExchangeOptions,
-    IQueueDeclareOptions,
-    IQueueConsumeOptions,
-    IRoutingHeaders,
-} from './types';
-
-export type ExchangeType = 'fanout' | 'direct' | 'topic' | 'headers';
+import { Channel, ConsumeMessage as AmqplibMessage, Options as AmqplibOptions } from 'amqplib';
 
 type PartlyRequired<T, R extends keyof T> = Required<Pick<T, R>> & Omit<T, R>;
 
+export interface IArguments {
+    [key: string]: any;
+}
+
+export type IExchangeOptions = Pick<AmqplibOptions.AssertExchange, 'internal' | 'durable' | 'autoDelete'> & {
+    arguments?: IArguments;
+};
+
 export type IExchangeOptionsStrict = PartlyRequired<IExchangeOptions, 'durable' | 'autoDelete' | 'internal'>;
+
+type IQueueDeclareOptions = Pick<AmqplibOptions.AssertQueue, 'durable' | 'autoDelete'> & {
+    arguments?: IArguments;
+};
+type IQueueConsumeOptions = Pick<AmqplibOptions.Consume, 'consumerTag' | 'noAck' | 'exclusive' | 'priority'> & {
+    arguments?: IArguments;
+};
+export interface IQueueOptions {
+    declare?: IQueueDeclareOptions;
+    consume?: IQueueConsumeOptions;
+}
+
+export interface IQueueOptionsStrict {
+    declare: PartlyRequired<IQueueDeclareOptions, 'durable' | 'autoDelete'>;
+    consume: PartlyRequired<IQueueConsumeOptions, 'noAck' | 'exclusive'>;
+}
+
 interface IExchangeData {
-    exType: ExchangeType;
+    exType: string;
     opts: IExchangeOptionsStrict;
     declared: boolean;
 }
 
-type IQueueDeclareOptionsStrict = PartlyRequired<IQueueDeclareOptions, 'durable' | 'autoDelete'>;
-type IQueueConsumeOptionsStrict = PartlyRequired<IQueueConsumeOptions, 'noAck' | 'exclusive'>;
-export interface IQueueOptionsStrict {
-    declare: IQueueDeclareOptionsStrict,
-    consume: IQueueConsumeOptionsStrict,
+export interface IChannelHandler {
+    chan: Channel | null;
 }
+
 type ConsumeCallback = (chanHandler: IChannelHandler, msg: AmqplibMessage | null) => void;
 interface IQueueData {
     name: string;
@@ -40,7 +53,7 @@ interface IBinding<T> {
     src: string;
     dest: T;
     routingKey: string;
-    headers: IRoutingHeaders | undefined;
+    args: IArguments | undefined;
     bound: boolean;
 }
 type IExchangeBinding = IBinding<string>;
@@ -69,7 +82,7 @@ export class Client extends EventEmitter {
         chanWrap.on('close', this.onClose.bind(this));
     }
 
-    public declareExchange(name: string, exType: ExchangeType, options: IExchangeOptionsStrict): void {
+    public declareExchange(name: string, exType: string, options: IExchangeOptionsStrict): void {
         if (this.exchanges.has(name)) {
             throw new Error(`Exchange "${name}" already created`);
         }
@@ -117,7 +130,7 @@ export class Client extends EventEmitter {
         return this.tmpQueueId;
     }
 
-    public bindExchange(src: string, dest: string, routingKey: string, headers?: IRoutingHeaders): void {
+    public bindExchange(src: string, dest: string, routingKey: string, args?: IArguments): void {
         if (!this.exchanges.has(src)) {
             throw new Error(`Cannot bind: source exchange ${src} not declared`);
         }
@@ -128,14 +141,14 @@ export class Client extends EventEmitter {
             src,
             dest,
             routingKey,
-            headers,
+            args,
             bound: false,
         };
         this.exBindings.push(b);
         this.deferBindExchange(b);
     }
 
-    public bindQueue(exName: string, queueName: string | number, routingKey: string, headers?: IRoutingHeaders): void {
+    public bindQueue(exName: string, queueName: string | number, routingKey: string, args?: IArguments): void {
         if (!this.exchanges.has(exName)) {
             throw new Error(`Cannot bind: source exchange ${exName} not declared`);
         }
@@ -146,7 +159,7 @@ export class Client extends EventEmitter {
             src: exName,
             dest: queueName,
             routingKey,
-            headers,
+            args,
             bound: false,
         };
         this.queueBindings.push(b);
@@ -214,7 +227,7 @@ export class Client extends EventEmitter {
 
     private deferBindExchange(b: IExchangeBinding): void {
         this.deferSetup(async (chan: Channel): Promise<void> => {
-            await chan.bindExchange(b.dest, b.src, b.routingKey, b.headers);
+            await chan.bindExchange(b.dest, b.src, b.routingKey, b.args);
             b.bound = true;
         });
     }
@@ -226,7 +239,7 @@ export class Client extends EventEmitter {
             throw new Error(`BUG: Client#deferBindQueue(): queue ${b.dest} not declared`);
         }
         this.deferSetup(async (chan: Channel): Promise<void> => {
-            await chan.bindQueue(queue.name, b.src, b.routingKey, b.headers);
+            await chan.bindQueue(queue.name, b.src, b.routingKey, b.args);
             b.bound = true;
         });
     }
