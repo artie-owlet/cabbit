@@ -5,16 +5,10 @@ import { ConnectionWrapper, IConnectionWrapper, IConnectOptions } from '@artie-o
 
 import { Client } from './client';
 import { ContentDecoder, ContentMimeTypeParser, ContentParser } from './content-parser';
-import {
-    IExchangeOptions,
-    FanoutExchange,
-    DirectExchange,
-    TopicExchange,
-    HeadersExchange,
-    CustomExchange,
-} from './exchange';
+import { FanoutExchange, DirectExchange, TopicExchange, HeadersExchange, CustomExchange } from './exchange';
 import { Message } from './message';
-import { ConsumeMiddleware, IQueueOptions, Queue } from './queue';
+import { ConsumeMiddleware, Queue } from './queue';
+import { IExchangeOptions, IQueueOptions } from './types';
 
 interface ICabbitEvents {
     close: () => void;

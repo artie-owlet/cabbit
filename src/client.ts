@@ -13,16 +13,16 @@ import {
 
 export type ExchangeType = 'fanout' | 'direct' | 'topic' | 'headers';
 
-export type IExchangeOptionsStrict = Required<IExchangeOptions>;
+type PartlyRequired<T, R extends keyof T> = Required<Pick<T, R>> & Omit<T, R>;
+
+export type IExchangeOptionsStrict = PartlyRequired<IExchangeOptions, 'durable' | 'autoDelete' | 'internal'>;
 interface IExchangeData {
     exType: ExchangeType;
     opts: IExchangeOptionsStrict;
     declared: boolean;
 }
 
-type PartlyRequired<T, R extends keyof T> = Required<Pick<T, R>> & Omit<T, R>;
-
-type IQueueDeclareOptionsStrict = Required<IQueueDeclareOptions>;
+type IQueueDeclareOptionsStrict = PartlyRequired<IQueueDeclareOptions, 'durable' | 'autoDelete'>;
 type IQueueConsumeOptionsStrict = PartlyRequired<IQueueConsumeOptions, 'noAck' | 'exclusive'>;
 export interface IQueueOptionsStrict {
     declare: IQueueDeclareOptionsStrict,

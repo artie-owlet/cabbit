@@ -77,5 +77,3 @@ export class ContentParser {
         this.parseDefault = parse;
     }
 }
-
-export type ParseContent = typeof ContentParser.prototype.parse;
