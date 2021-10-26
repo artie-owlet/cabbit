@@ -137,7 +137,7 @@ export class Client extends EventEmitter {
         if (!this.exchanges.has(dest)) {
             throw new Error(`Cannot bind: destination exchange ${dest} not declared`);
         }
-        const b = {
+        const b: IExchangeBinding = {
             src,
             dest,
             routingKey,
@@ -155,7 +155,7 @@ export class Client extends EventEmitter {
         if (!this.queues.has(queueName)) {
             throw new Error(`Cannot bind: queue ${queueName} not declared`);
         }
-        const b = {
+        const b: IQueueBinding = {
             src: exName,
             dest: queueName,
             routingKey,
