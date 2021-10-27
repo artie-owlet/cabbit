@@ -69,6 +69,6 @@ export class Message<T> {
             this.chanHandler.chan.nack(this.amqplibMessage, allUpTo, requeue);
             return true;
         }
-        return true;
+        return false;
     }
 }
