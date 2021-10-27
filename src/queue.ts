@@ -35,6 +35,8 @@ const namedQueueOptions: IQueueOptionsStrict = {
     },
 };
 
+type Exchange = FanoutExchange | DirectExchange | TopicExchange | HeadersExchange | CustomExchange;
+
 export class Queue<T> {
     /**
      * @hidden
@@ -68,23 +70,21 @@ export class Queue<T> {
         }
     }
 
-    public subscribeFanout(ex: FanoutExchange): this {
-        return this;
-    }
-
-    public subscribeDirect(ex: DirectExchange, routingKey: string | string[]): this {
-        return this;
-    }
-
-    public subscribeTopic(ex: TopicExchange, routingKey: string | string[]): this {
-        return this;
-    }
-
-    public subscribeHeaders(ex: HeadersExchange, routingHeaders: IRoutingHeaders): this {
-        return this;
-    }
-
-    public subscribe(ex: CustomExchange, routingKey?: string, args?: IArguments): this {
+    public subscribe(ex: FanoutExchange): this;
+    public subscribe(ex: DirectExchange, routingKey: string | string[]): this;
+    public subscribe(ex: TopicExchange, routingKey: string | string[]): this;
+    public subscribe(ex: HeadersExchange, routingHeaders: IRoutingHeaders): this;
+    public subscribe(ex: CustomExchange, routingKey?: string, args?: IArguments): this;
+    public subscribe(ex: Exchange, ...args: any[]): this {
+        if (ex instanceof FanoutExchange) {
+            ex.bind(this);
+        } else if (ex instanceof DirectExchange || ex instanceof TopicExchange) {
+            ex.bind(this, args[0] as string | string[]);
+        } else if (ex instanceof HeadersExchange) {
+            ex.bind(this, args[0] as IRoutingHeaders);
+        } else {
+            ex.bind(this, args[0] as string | undefined, args[1] as IArguments);
+        }
         return this;
     }
 

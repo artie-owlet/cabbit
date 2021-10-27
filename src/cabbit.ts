@@ -112,35 +112,35 @@ export class Cabbit extends EventEmitter implements ICabbitEventEmitter {
      * Create fanout exchange
      */
     fanout(name: string, options?: IExchangeOptions): FanoutExchange {
-        return new FanoutExchange(this.client, this.contentParser, name, false, options);
+        return new FanoutExchange(this.client, this.contentParser, name, options);
     }
 
     /**
      * Create direct exchange
      */
     direct(name: string, options?: IExchangeOptions): DirectExchange {
-        return new DirectExchange(this.client, this.contentParser, name, false, options);
+        return new DirectExchange(this.client, this.contentParser, name, options);
     }
 
     /**
      * Create topic exchange
      */
     topic(name: string, options?: IExchangeOptions): TopicExchange {
-        return new TopicExchange(this.client, this.contentParser, name, false, options);
+        return new TopicExchange(this.client, this.contentParser, name, options);
     }
 
     /**
      * Create headers exchange
      */
     headers(name: string, options?: IExchangeOptions): HeadersExchange {
-        return new HeadersExchange(this.client, this.contentParser, name, false, options);
+        return new HeadersExchange(this.client, this.contentParser, name, options);
     }
 
     /**
      * Create exchange with custom type
      */
     exchange(name: string, exType: string, options?: IExchangeOptions): CustomExchange {
-        return new CustomExchange(this.client, this.contentParser, name, exType, false, options);
+        return new CustomExchange(this.client, this.contentParser, name, exType, options);
     }
 
     /**

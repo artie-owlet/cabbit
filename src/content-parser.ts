@@ -1,7 +1,7 @@
 export type ContentDecoder = (input: Buffer) => Buffer;
 export type ContentMimeTypeParser = (input: Buffer, charset?: string) => any;
 
-export function charsetParser(input: Buffer, charset?: string): string {
+function charsetParser(input: Buffer, charset?: string): string {
     if (!charset) {
         return input.toString('utf8');
     }
