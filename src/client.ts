@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-import { IChannelWrapper } from '@artie-owlet/amqplib-wrapper';
+import { ChannelWrapper } from '@artie-owlet/amqplib-wrapper';
 import { Channel, ConsumeMessage as AmqplibMessage, Options as AmqplibOptions } from 'amqplib';
 
 type PartlyRequired<T, R extends keyof T> = Required<Pick<T, R>> & Omit<T, R>;
@@ -75,7 +75,7 @@ export class Client extends EventEmitter {
     private closed = false;
 
     constructor(
-        private chanWrap: IChannelWrapper<Channel>,
+        private chanWrap: ChannelWrapper<Channel>,
         private passive: boolean,
     ) {
         super();

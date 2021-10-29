@@ -37,13 +37,14 @@ export class ContentParser {
 
     public parse(input: Buffer, contentEncoding: string | undefined, contentType: string | undefined): any {
         if (contentEncoding && contentEncoding !== '') {
-            contentEncoding.replace(/\s/g, '').split(',').forEach((enc) => {
-                const decode = this.decoders.get(enc.toLowerCase());
-                if (!decode) {
-                    throw new Error(`unknown encoding ${enc}`);
-                }
-                input = decode(input);
-            });
+            contentEncoding.replace(/\s/g, '').split(',')
+                .forEach((enc) => {
+                    const decode = this.decoders.get(enc.toLowerCase());
+                    if (!decode) {
+                        throw new Error(`unknown encoding ${enc}`);
+                    }
+                    input = decode(input);
+                });
         } else if (this.decodeDefault) {
             input = this.decodeDefault(input);
         }

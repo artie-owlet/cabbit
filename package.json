@@ -17,29 +17,27 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@artie-owlet/amqp-routing-match": "^1.0.0",
-    "@artie-owlet/amqplib-wrapper": "^1.2.3"
+    "@artie-owlet/amqplib-wrapper": "^2.0.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/amqplib": "^0.8.1",
-    "@types/chai": "^4.2.21",
+    "@types/amqplib": "^0.8.2",
+    "@types/chai": "^4.2.22",
     "@types/chai-as-promised": "^7.1.4",
-    "@types/mocha": "^8.2.3",
-    "@types/node": "^14.17.5",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.6",
     "@types/qs": "^6.9.7",
-    "@typescript-eslint/eslint-plugin": "^4.28.2",
-    "@typescript-eslint/parser": "^4.28.2",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^7.30.0",
-    "mocha": "^9.0.2",
+    "eslint": "^8.1.0",
+    "mocha": "^9.1.3",
     "nyc": "^15.1.0",
     "qs": "^6.10.1",
-    "ts-node": "^10.1.0",
-    "typedoc": "^0.22.6",
-    "typedoc-plugin-markdown": "^3.11.3",
-    "typescript": "^4.3.5"
+    "ts-node": "^10.4.0",
+    "typedoc": "^0.22.7",
+    "typescript": "^4.4.4"
   },
   "repository": {
     "type": "git",

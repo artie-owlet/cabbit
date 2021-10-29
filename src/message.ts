@@ -35,8 +35,8 @@ export class Message<T> {
     ) {
         try {
             this.body = parser.parse(amqplibMessage.content,
-                amqplibMessage.properties.contentEncoding,
-                amqplibMessage.properties.contentType) as T;
+                amqplibMessage.properties.contentEncoding as string | undefined,
+                amqplibMessage.properties.contentType as string | undefined) as T;
         } catch (err) {
             /* istanbul ignore next: else */
             this.parseError = err instanceof Error ? err.message : String(err);

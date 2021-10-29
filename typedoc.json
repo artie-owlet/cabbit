@@ -3,9 +3,9 @@
     "./src/index.ts"
   ],
   "readme": "none",
-  "out": "./doc/api",
-  "entryDocument": "api.md",
-  "name": "API",
+  "out": "./public",
+  "name": "cabbit API",
+  "includeVersion": true,
   "disableSources": true,
   "excludePrivate": true,
   "excludeExternals": true

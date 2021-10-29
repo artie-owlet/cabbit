@@ -1,4 +1,4 @@
-export { Cabbit, ICabbitOptions } from './cabbit';
+export { Cabbit, ICabbitEvents, ICabbitOptions } from './cabbit';
 export { IExchangeOptions, IQueueOptions } from './client';
 export { ContentDecoder, ContentParser } from './content-parser';
 export {
