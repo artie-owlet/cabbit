@@ -88,7 +88,7 @@ describe('Message', () => {
         it('should return false if channel closed', () => {
             const msg = new Message(msgMock, { chan: null }, parser);
             expect(msg.ack()).eq(false);
-        })
+        });
     });
 
     describe('#nack()', () => {
@@ -113,6 +113,6 @@ describe('Message', () => {
         it('should return false if channel closed', () => {
             const msg = new Message(msgMock, { chan: null }, parser);
             expect(msg.nack()).eq(false);
-        })
+        });
     });
 });

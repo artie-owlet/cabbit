@@ -6,7 +6,6 @@ import { ConnectionWrapper, IConnectOptions } from '@artie-owlet/amqplib-wrapper
 import { Client, IExchangeOptions, IQueueOptions } from './client';
 import { ContentDecoder, ContentMimeTypeParser, ContentParser } from './content-parser';
 import { FanoutExchange, DirectExchange, TopicExchange, HeadersExchange, CustomExchange } from './exchange';
-import { Message } from './message';
 import { ConsumeMiddleware, Queue } from './queue';
 
 /**
@@ -24,7 +23,6 @@ export interface ICabbitEvents {
     error: (err: Error) => void;
     setup: () => void;
     setupFailed: (err: Error) => void;
-    unhandledMessage: (msg: Message<any>, queue: string | number) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
