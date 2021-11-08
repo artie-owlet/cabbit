@@ -9,7 +9,7 @@ export interface IArguments {
     [key: string]: any;
 }
 
-export type IExchangeOptions = Pick<AmqplibOptions.AssertExchange, 'internal' | 'durable' | 'autoDelete'> & {
+export type IExchangeOptions = Pick<AmqplibOptions.AssertExchange, 'durable' | 'autoDelete' | 'internal'> & {
     arguments?: IArguments;
 };
 
@@ -27,7 +27,7 @@ export interface IQueueOptions {
 }
 
 export interface IQueueOptionsStrict {
-    declare: PartlyRequired<AmqplibOptions.AssertQueue, 'durable' | 'autoDelete' | 'exclusive'>;
+    declare: PartlyRequired<IQueueDeclareOptions, 'durable' | 'autoDelete'>;
     consume: PartlyRequired<IQueueConsumeOptions, 'noAck' | 'exclusive'>;
 }
 
@@ -116,7 +116,6 @@ export class Client extends EventEmitter {
                 declare: {
                     durable: false,
                     autoDelete: true,
-                    exclusive: true,
                 },
                 consume: {
                     noAck,
@@ -133,10 +132,10 @@ export class Client extends EventEmitter {
 
     public bindExchange(src: string, dest: string, routingKey: string, args?: IArguments): void {
         if (!this.exchanges.has(src)) {
-            throw new Error(`Cannot bind: source exchange ${src} not declared`);
+            throw new Error(`Cannot bind: source exchange "${src}" not declared`);
         }
         if (!this.exchanges.has(dest)) {
-            throw new Error(`Cannot bind: destination exchange ${dest} not declared`);
+            throw new Error(`Cannot bind: destination exchange "${dest}" not declared`);
         }
         const b: IExchangeBinding = {
             src,
@@ -151,10 +150,10 @@ export class Client extends EventEmitter {
 
     public bindQueue(exName: string, queueName: string | number, routingKey: string, args?: IArguments): void {
         if (!this.exchanges.has(exName)) {
-            throw new Error(`Cannot bind: source exchange ${exName} not declared`);
+            throw new Error(`Cannot bind: source exchange "${exName}" not declared`);
         }
         if (!this.queues.has(queueName)) {
-            throw new Error(`Cannot bind: queue ${queueName} not declared`);
+            throw new Error(`Cannot bind: queue "${queueName}" not declared`);
         }
         const b: IQueueBinding = {
             src: exName,
@@ -221,6 +220,7 @@ export class Client extends EventEmitter {
             const {queue: name} = await chan.assertQueue('', Object.assign({
                 exclusive: true,
             }, queueData.opts.declare));
+            queueData.name = name;
             await chan.consume(name, queueData.cb.bind(null, chanHandler), queueData.opts.consume);
             queueData.declared = true;
         });

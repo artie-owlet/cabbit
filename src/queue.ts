@@ -28,7 +28,6 @@ const namedQueueOptions: IQueueOptionsStrict = {
     declare: {
         durable: true,
         autoDelete: false,
-        exclusive: false,
     },
     consume: {
         noAck: false,
