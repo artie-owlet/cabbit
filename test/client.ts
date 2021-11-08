@@ -44,6 +44,7 @@ describe('Client', () => {
         declare: {
             durable: true,
             autoDelete: false,
+            exclusive: false,
         },
         consume: {
             noAck: false,
@@ -71,13 +72,31 @@ describe('Client', () => {
     });
 
     describe('#declareQueue()', () => {
-        it('should declare queue', async () => {
+        it('should declare named queue', async () => {
             client.declareQueue('test', qOpts, cb);
             await promisifyEvent(client, 'setup');
             const chanMock = connectMock.connections[0].channels[0];
             expect(chanMock.calls).deep.eq([
                 ['assertQueue', 'test', qOpts.declare],
-                ['consume', 'test', cb, qOpts.consume],
+                ['consume', 'test', qOpts.consume],
+            ]);
+        });
+
+        it('should throw if the same queue is declared twice', () => {
+            client.declareQueue('test', qOpts, cb);
+            expect(client.declareQueue.bind(client, 'test', qOpts, cb)).throws(Error)
+                .property('message', 'Queue "test" already created');
+        });
+    });
+
+    describe('#declareTmpQueue', () => {
+        it('should declare tmp queue', async () => {
+            client.declareTmpQueue(cb, true);
+            await promisifyEvent(client, 'setup');
+            const chanMock = connectMock.connections[0].channels[0];
+            expect(chanMock.calls).deep.eq([
+                ['assertQueue', 'test', qOpts.declare],
+                ['consume', 'test', qOpts.consume],
             ]);
         });
     });

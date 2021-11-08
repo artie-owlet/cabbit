@@ -27,7 +27,7 @@ export interface IQueueOptions {
 }
 
 export interface IQueueOptionsStrict {
-    declare: PartlyRequired<IQueueDeclareOptions, 'durable' | 'autoDelete'>;
+    declare: PartlyRequired<AmqplibOptions.AssertQueue, 'durable' | 'autoDelete' | 'exclusive'>;
     consume: PartlyRequired<IQueueConsumeOptions, 'noAck' | 'exclusive'>;
 }
 
@@ -97,7 +97,7 @@ export class Client extends EventEmitter {
 
     public declareQueue(name: string, options: IQueueOptionsStrict, cb: ConsumeCallback): void {
         if (this.queues.has(name)) {
-            throw new Error(`Queue "${name} already created`);
+            throw new Error(`Queue "${name}" already created`);
         }
         const queueData: IQueueData = {
             name,
@@ -116,6 +116,7 @@ export class Client extends EventEmitter {
                 declare: {
                     durable: false,
                     autoDelete: true,
+                    exclusive: true,
                 },
                 consume: {
                     noAck,

@@ -137,9 +137,9 @@ export class ChannelMock extends EventEmitter {
         return {};
     }
 
-    public async consume(queue: string, ...args: unknown[]): Promise<Replies.Consume> {
+    public async consume(queue: string, _: unknown, opts: unknown): Promise<Replies.Consume> {
         await Promise.resolve();
-        this.calls.push(['consume', queue, ...args]);
+        this.calls.push(['consume', queue, opts]);
         return {
             consumerTag: `cons-${++this.consumerTag}`,
         };
