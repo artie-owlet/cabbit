@@ -292,3 +292,45 @@ describe('Client', () => {
         });
     });
 });
+
+describe('Client (passive mode)', () => {
+    let connectOrig: typeof amqplib.connect;
+    let connectMock: ConnectMock;
+    let connWrap: ConnectionWrapper;
+    let chanWrap: ChannelWrapper<Channel>;
+    let client: Client;
+
+    before(() => {
+        connectOrig = amqplib.connect;
+    });
+
+    after(() => {
+        amqplib.connect = connectOrig;
+    });
+
+    beforeEach(() => {
+        connectMock = new ConnectMock();
+        amqplib.connect = connectMock.connect.bind(connectMock) as unknown as typeof amqplib.connect;
+        connWrap = new ConnectionWrapper({});
+        chanWrap = connWrap.createChannelWrapper();
+        client  = new Client(chanWrap, false);
+    });
+
+    afterEach(async () => {
+        await client.close();
+    });
+
+    describe('#declareExchange()', () => {
+        it('should check exchange', async () => {
+            const exOpts = {
+                internal: false,
+                durable: true,
+                autoDelete: false,
+            };
+            client.declareExchange('test', 'topic', exOpts);
+            await promisifyEvent(client, 'setup');
+            const chanMock = connectMock.connections[0].channels[0];
+            expect(chanWrap.chan.calls).deep.eq(['checkExchange-test']);
+        });
+    });
+});
