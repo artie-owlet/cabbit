@@ -79,7 +79,7 @@ export class Client extends EventEmitter {
         private passive: boolean,
     ) {
         super();
-        chanWrap.on('close', this.onClose.bind(this));
+        chanWrap.on('open', this.onOpen.bind(this));
     }
 
     public declareExchange(name: string, exType: string, options: IExchangeOptionsStrict): void {
@@ -278,6 +278,10 @@ export class Client extends EventEmitter {
         } finally {
             this.setupPromise = null;
         }
+    }
+
+    private onOpen(chan: Channel): void {
+        chan.once('close', this.onClose.bind(this));
     }
 
     private onClose(): void {

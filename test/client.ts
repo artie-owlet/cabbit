@@ -261,16 +261,17 @@ describe('Client', () => {
         it('should restore topology if channel closed', async () => {
             client.declareExchange('testex', 'topic', exOpts);
             client.declareExchange('testex2', 'topic', exOpts);
-            client.bindExchange('testex', 'testex2', 'testrk2');
+            client.bindExchange('testex', 'testex2', 'testrk1');
             client.declareQueue('testq', qOpts, cb);
-            client.bindQueue('testex', 'testq', 'testrk');
-            const id = client.declareTmpQueue(cb, false);
-            client.bindQueue('testex', id, 'testrk');
+            client.bindQueue('testex', 'testq', 'testrk2');
+            const id = client.declareTmpQueue(cb, true);
+            client.bindQueue('testex', id, 'testrk3');
             await promisifyEvent(client, 'setup');
             const chanMock = connectMock.connections[0].channels[0];
             chanMock.testClose();
             await promisifyEvent(client, 'setup');
-            expect(chanMock.calls).deep.eq([
+            const chanMock2 = connectMock.connections[0].channels[1];
+            expect(chanMock2.calls).deep.eq([
                 ['assertExchange', 'testex', 'topic', exOpts],
                 ['assertExchange', 'testex2', 'topic', exOpts],
                 ['assertQueue', 'testq', qOpts.declare],
@@ -280,13 +281,13 @@ describe('Client', () => {
                     autoDelete: true,
                     exclusive: true,
                 }],
-                ['consume', 'tmp2', {
+                ['consume', 'tmp1', {
                     noAck: true,
                     exclusive: true,
                 }],
-                ['bindExchange', 'testex2', 'testex1', 'testrk', undefined],
-                ['bindQueue', 'testq', 'testex', 'testrk', undefined],
-                ['bindQueue', 'tmp2', 'testex', 'testrk', undefined],
+                ['bindExchange', 'testex2', 'testex', 'testrk1', undefined],
+                ['bindQueue', 'testq', 'testex', 'testrk2', undefined],
+                ['bindQueue', 'tmp1', 'testex', 'testrk3', undefined],
             ]);
         });
     });
