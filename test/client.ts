@@ -313,7 +313,7 @@ describe('Client (passive mode)', () => {
         amqplib.connect = connectMock.connect.bind(connectMock) as unknown as typeof amqplib.connect;
         connWrap = new ConnectionWrapper({});
         chanWrap = connWrap.createChannelWrapper();
-        client  = new Client(chanWrap, false);
+        client  = new Client(chanWrap, true);
     });
 
     afterEach(async () => {
@@ -330,7 +330,54 @@ describe('Client (passive mode)', () => {
             client.declareExchange('test', 'topic', exOpts);
             await promisifyEvent(client, 'setup');
             const chanMock = connectMock.connections[0].channels[0];
-            expect(chanWrap.chan.calls).deep.eq(['checkExchange-test']);
+            expect(chanMock.calls).deep.eq([
+                ['checkExchange', 'test'],
+            ]);
+        });
+    });
+
+    describe('#declareQueue()', () => {
+        it('should check named queue', async () => {
+            client.declareQueue('test', {
+                declare: {
+                    durable: true,
+                    autoDelete: false,
+                },
+                consume: {
+                    noAck: false,
+                    exclusive: false,
+                },
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            }, () => {});
+            await promisifyEvent(client, 'setup');
+            const chanMock = connectMock.connections[0].channels[0];
+            expect(chanMock.calls).deep.eq([
+                ['checkQueue', 'test'],
+                ['consume', 'test', {
+                    noAck: false,
+                    exclusive: false,
+                }],
+            ]);
+        });
+    });
+
+    describe('#declareTmpQueue', () => {
+        it('should declare tmp queue', async () => {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            client.declareTmpQueue(() => {}, true);
+            await promisifyEvent(client, 'setup');
+            const chanMock = connectMock.connections[0].channels[0];
+            expect(chanMock.calls).deep.eq([
+                ['assertQueue', '', {
+                    durable: false,
+                    autoDelete: true,
+                    exclusive: true,
+                }],
+                ['consume', 'tmp1', {
+                    noAck: true,
+                    exclusive: true,
+                }],
+            ]);
         });
     });
 });

@@ -1,7 +1,7 @@
 import { gzipSync, gunzipSync } from 'zlib';
 
 import { expect } from 'chai';
-import * as qs from 'qs';
+import qs from 'qs';
 
 import { ContentParser } from '../src/content-parser';
 
@@ -10,9 +10,13 @@ function parseQs(input: Buffer) {
 }
 
 describe('ContentParser', () => {
-    describe('#parse()', () => {
-        const cp = new ContentParser();
+    let cp: ContentParser;
 
+    beforeEach(() => {
+        cp = new ContentParser();
+    });
+
+    describe('#parse()', () => {
         type BufferEncoding = 'ascii' | 'utf8' | 'utf16le' | 'latin1';
         const testTextParser = (charset: string, text: string, jsEnc: BufferEncoding) => {
             it(`should parse "text/plain; charset=${charset}"`, () => {
@@ -59,8 +63,6 @@ describe('ContentParser', () => {
     });
 
     describe('#setDecoder()', () => {
-        const cp = new ContentParser();
-
         it('should set decoder', () => {
             cp.setDecoder('gzip', gunzipSync);
             const data = 'The quick brown fox jumps over the lazy dog';
@@ -69,8 +71,6 @@ describe('ContentParser', () => {
     });
 
     describe('#setDefaultDecoder()', () => {
-        const cp = new ContentParser();
-
         it('should set default decoder', () => {
             cp.setDefaultDecoder(gunzipSync);
             const data = 'The quick brown fox jumps over the lazy dog';
@@ -79,8 +79,6 @@ describe('ContentParser', () => {
     });
 
     describe('#setParser()', () => {
-        const cp = new ContentParser();
-
         it('should set MIME-type parser', () => {
             cp.setParser('application/x-www-form-urlencoded', parseQs);
             const data = {a: 'abc'};
@@ -90,8 +88,6 @@ describe('ContentParser', () => {
     });
 
     describe('#setDefaultParser()', () => {
-        const cp = new ContentParser();
-
         it('should set default MIME-type parser', () => {
             cp.setDefaultParser(parseQs);
             const data = {a: 'abc'};

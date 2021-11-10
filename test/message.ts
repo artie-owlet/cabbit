@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Channel, ConsumeMessage as AmqplibMessage } from 'amqplib';
 
 import { ContentParser } from '../src/content-parser';
-import { Message } from '../src/message';
+import { Message } from '../src/index';
 
 const msgMock: AmqplibMessage = {
     content: Buffer.from('hello'),
@@ -52,8 +52,16 @@ parser.setParser('test/error', () => {
 
 describe('Message', () => {
     let chanMock: ChannelMock;
-    beforeEach(() => {
+    let msg: Message<any>;
+
+    beforeEach(function () {
         chanMock = new ChannelMock();
+
+        if (this.currentTest &&
+            this.currentTest.titlePath()[1] !== 'constructor' &&
+            this.currentTest.titlePath()[2] !== 'should return false if channel closed') {
+            msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
+        }
     });
 
     describe('constructor', () => {
@@ -74,13 +82,11 @@ describe('Message', () => {
 
     describe('#ack()', () => {
         it('should ack single message', () => {
-            const msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
             expect(msg.ack()).eq(true);
             expect(chanMock.ackArgs).deep.eq([msgMock, false]);
         });
 
         it('should ack all messages', () => {
-            const msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
             expect(msg.ack(true)).eq(true);
             expect(chanMock.ackArgs).deep.eq([msgMock, true]);
         });
@@ -93,19 +99,16 @@ describe('Message', () => {
 
     describe('#nack()', () => {
         it('should nack single message', () => {
-            const msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
             expect(msg.nack()).eq(true);
             expect(chanMock.nackArgs).deep.eq([msgMock, false, false]);
         });
 
         it('should nack message with requeue', () => {
-            const msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
             expect(msg.nack(false, true)).eq(true);
             expect(chanMock.nackArgs).deep.eq([msgMock, false, true]);
         });
 
         it('should nack all messages', () => {
-            const msg = new Message(msgMock, { chan: chanMock as unknown as Channel }, parser);
             expect(msg.nack(true)).eq(true);
             expect(chanMock.nackArgs).deep.eq([msgMock, true, false]);
         });
