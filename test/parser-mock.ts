@@ -30,3 +30,11 @@ export class ParserMock {
         this.defaultParserArgs = [...args];
     }
 }
+
+export function getParserMock(): ParserMock | undefined {
+    return parserMock;
+}
+
+export function clearParserMock(): void {
+    parserMock = undefined;
+}
