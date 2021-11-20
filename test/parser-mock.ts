@@ -1,10 +1,6 @@
 let parserMock: ParserMock | undefined = undefined;
-
 export class ParserMock {
-    public decoderArgs = [] as unknown[];
-    public defaultDecoderArgs = [] as unknown[];
-    public parserArgs = [] as unknown[];
-    public defaultParserArgs = [] as unknown[];
+    public calls = [] as [string, ...unknown[]][];
 
     constructor() {
         parserMock = this;
@@ -15,19 +11,19 @@ export class ParserMock {
     }
 
     public setDecoder(...args: unknown[]): void {
-        this.decoderArgs = [...args];
+        this.calls.push(['setDecoder', ...args]);
     }
 
     public setDefaultDecoder(...args: unknown[]): void {
-        this.defaultDecoderArgs = [...args];
+        this.calls.push(['setDefaultDecoder', ...args]);
     }
 
     public setParser(...args: unknown[]): void {
-        this.parserArgs = [...args];
+        this.calls.push(['setDefaultParser', ...args]);
     }
 
     public setDefaultParser(...args: unknown[]): void {
-        this.defaultParserArgs = [...args];
+        this.calls.push(['setDefaultParser', ...args]);
     }
 }
 

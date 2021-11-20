@@ -3,6 +3,7 @@ import { expect } from 'chai';
 /* eslint-disable @typescript-eslint/no-var-requires */
 const amqplib = require('amqplib') as typeof import('amqplib');
 const client = require('../src/client') as typeof import('../src/client');
+const parser = require('../src/content-parser') as typeof import('../src/content-parser');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 import { ConnectionWrapper, ChannelWrapper } from '@artie-owlet/amqplib-wrapper';
@@ -10,6 +11,7 @@ import { Channel } from 'amqplib';
 
 import { ConnectMock } from './amqplib-mock';
 import { ClientMock, getClientMock, clearClientMock } from './client-mock';
+import { ParserMock, getParserMock, clearParserMock } from './parser-mock';
 import { promisifyEvent } from './promisify-event';
 
 import { Cabbit } from '../src/index';
@@ -17,6 +19,7 @@ import { Cabbit } from '../src/index';
 describe('Cabbit', () => {
     let connectOrig: typeof amqplib.connect;
     let clientOrig: typeof client.Client;
+    let parserOrig: typeof parser.Parser;
     let connectMock: ConnectMock;
     let cabbit: Cabbit;
 
