@@ -1,6 +1,9 @@
+/* eslint-disable prefer-rest-params */
 import EventEmitter from 'events';
 
 import { Connection, Channel, ConfirmChannel, Replies } from 'amqplib';
+
+import { CallRecorder, mixCallRecorder } from './call-recorder';
 
 export class ConnectMock {
     public connectThrows = 0;
@@ -76,41 +79,43 @@ export class ConnectionMock extends EventEmitter {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
+export interface ChannelMock extends CallRecorder {}
+
 export class ChannelMock extends EventEmitter {
-    public calls = [] as [string, ...unknown[]][];
     public fail = false;
     public closed = false;
 
     private tmpId = 0;
     private consumerTag = 0;
 
-    public async assertExchange(exchange: string, ...args: unknown[]): Promise<Replies.AssertExchange> {
+    public async assertExchange(exchange: string): Promise<Replies.AssertExchange> {
         await Promise.resolve();
         if (this.fail) {
             throw new Error('test error');
         }
-        this.calls.push(['assertExchange', exchange, ...args]);
+        this.recordCall(arguments);
         return {
             exchange,
         };
     }
 
-    public async checkExchange(exchange: string): Promise<Replies.Empty> {
+    public async checkExchange(): Promise<Replies.Empty> {
         await Promise.resolve();
-        this.calls.push(['checkExchange', exchange]);
+        this.recordCall(arguments);
         return {};
     }
 
-    public async bindExchange(...args: unknown[]): Promise<Replies.Empty> {
+    public async bindExchange(): Promise<Replies.Empty> {
         await Promise.resolve();
-        this.calls.push(['bindExchange', ...args]);
+        this.recordCall(arguments);
         return {};
     }
 
-    public async assertQueue(queue: string, ...args: unknown[]): Promise<Replies.AssertQueue> {
+    public async assertQueue(queue: string): Promise<Replies.AssertQueue> {
         await Promise.resolve();
         const name = queue === '' ? `tmp${++this.tmpId}` : queue;
-        this.calls.push(['assertQueue', queue, ...args]);
+        this.recordCall(arguments);
         return {
             queue: name,
             messageCount: 0,
@@ -123,7 +128,7 @@ export class ChannelMock extends EventEmitter {
         if (queue === '') {
             throw new Error('Cannot check unnamed queue');
         }
-        this.calls.push(['checkQueue', queue]);
+        this.recordCall(arguments);
         return {
             queue,
             messageCount: 0,
@@ -131,15 +136,15 @@ export class ChannelMock extends EventEmitter {
         };
     }
 
-    public async bindQueue(...args: unknown[]): Promise<Replies.Empty> {
+    public async bindQueue(): Promise<Replies.Empty> {
         await Promise.resolve();
-        this.calls.push(['bindQueue', ...args]);
+        this.recordCall(arguments);
         return {};
     }
 
-    public async consume(queue: string, _: unknown, opts: unknown): Promise<Replies.Consume> {
+    public async consume(): Promise<Replies.Consume> {
         await Promise.resolve();
-        this.calls.push(['consume', queue, opts]);
+        this.recordCall(arguments, [1]);
         return {
             consumerTag: `cons-${++this.consumerTag}`,
         };
@@ -162,5 +167,6 @@ export class ChannelMock extends EventEmitter {
         this.emit('close');
     }
 }
+mixCallRecorder(ChannelMock);
 
 export class ConfirmChannelMock extends ChannelMock {}

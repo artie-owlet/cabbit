@@ -19,7 +19,7 @@ import { Cabbit } from '../src/index';
 describe('Cabbit', () => {
     let connectOrig: typeof amqplib.connect;
     let clientOrig: typeof client.Client;
-    let parserOrig: typeof parser.Parser;
+    let parserOrig: typeof parser.ContentParser;
     let connectMock: ConnectMock;
     let cabbit: Cabbit;
 
@@ -27,11 +27,14 @@ describe('Cabbit', () => {
         connectOrig = amqplib.connect;
         clientOrig = client.Client;
         client.Client = ClientMock as unknown as typeof client.Client;
+        parserOrig = parser.ContentParser;
+        parser.ContentParser = ParserMock as unknown as typeof parser.ContentParser;
     });
 
     after(() => {
         amqplib.connect = connectOrig;
         client.Client = clientOrig;
+        parser.ContentParser = parserOrig;
     });
 
     beforeEach(function () {

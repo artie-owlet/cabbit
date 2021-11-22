@@ -40,7 +40,7 @@ export class CallRecorder {
 
 type Ctor = new (...args: any[]) => any;
 
-export function installCallRecorder(target: Ctor): void {
+export function mixCallRecorder(target: Ctor): void {
     Object.getOwnPropertyNames(CallRecorder.prototype).filter(name => name !== 'constructor')
         .forEach((name) => {
             Object.defineProperty(target.prototype, name,

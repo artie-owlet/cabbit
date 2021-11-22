@@ -1,10 +1,15 @@
+/* eslint-disable prefer-rest-params */
 import EventEmitter from 'events';
 
 import { ChannelWrapper } from '@artie-owlet/amqplib-wrapper';
 
+import { CallRecorder, mixCallRecorder } from './call-recorder';
+
+// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
+export interface ClientMock extends CallRecorder {}
+
 let clientMock: ClientMock | undefined = undefined;
 export class ClientMock extends EventEmitter {
-    public calls = [] as [string, ...unknown[]][];
     public closed = false;
 
     private tmpId = 0;
@@ -17,29 +22,29 @@ export class ClientMock extends EventEmitter {
         clientMock = this;
     }
 
-    public declareExchange(...args: unknown[]): void {
-        this.calls.push(['declareExchange', ...args]);
+    public declareExchange(): void {
+        this.recordCall(arguments);
     }
 
-    public declareQueue(...args: unknown[]): void {
-        this.calls.push(['declareQueue', ...args]);
+    public declareQueue(): void {
+        this.recordCall(arguments);
     }
 
-    public declareTmpQueue(...args: unknown[]): number {
-        this.calls.push(['declareTmpQueue', ...args]);
+    public declareTmpQueue(): number {
+        this.recordCall(arguments);
         return ++this.tmpId;
     }
 
-    public bindExchange(...args: unknown[]): void {
-        this.calls.push(['bindExchange', ...args]);
+    public bindExchange(): void {
+        this.recordCall(arguments);
     }
 
-    public bindQueue(...args: unknown[]): void {
-        this.calls.push(['bindQueue', ...args]);
+    public bindQueue(): void {
+        this.recordCall(arguments);
     }
 
-    public restoreQueue(...args: unknown[]): void {
-        this.calls.push(['restoreQueue', ...args]);
+    public restoreQueue(): void {
+        this.recordCall(arguments);
     }
 
     public close(): Promise<void> {
@@ -47,6 +52,7 @@ export class ClientMock extends EventEmitter {
         return Promise.resolve();
     }
 }
+mixCallRecorder(ClientMock);
 
 export function getClientMock(): ClientMock | undefined {
     return clientMock;

@@ -1,3 +1,9 @@
+/* eslint-disable prefer-rest-params */
+import { CallRecorder, mixCallRecorder } from './call-recorder';
+
+// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
+export interface ParserMock extends CallRecorder {}
+
 let parserMock: ParserMock | undefined = undefined;
 export class ParserMock {
     public calls = [] as [string, ...unknown[]][];
@@ -10,22 +16,23 @@ export class ParserMock {
         return 'test';
     }
 
-    public setDecoder(...args: unknown[]): void {
-        this.calls.push(['setDecoder', ...args]);
+    public setDecoder(): void {
+        this.recordCall(arguments);
     }
 
-    public setDefaultDecoder(...args: unknown[]): void {
-        this.calls.push(['setDefaultDecoder', ...args]);
+    public setDefaultDecoder(): void {
+        this.recordCall(arguments);
     }
 
-    public setParser(...args: unknown[]): void {
-        this.calls.push(['setDefaultParser', ...args]);
+    public setParser(): void {
+        this.recordCall(arguments);
     }
 
-    public setDefaultParser(...args: unknown[]): void {
-        this.calls.push(['setDefaultParser', ...args]);
+    public setDefaultParser(): void {
+        this.recordCall(arguments);
     }
 }
+mixCallRecorder(ParserMock);
 
 export function getParserMock(): ParserMock | undefined {
     return parserMock;
