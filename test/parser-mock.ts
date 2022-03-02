@@ -4,7 +4,7 @@ import { CallRecorder, mixCallRecorder } from './call-recorder';
 // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
 export interface ParserMock extends CallRecorder {}
 
-let parserMock: ParserMock | undefined = undefined;
+let parserMock: ParserMock;
 export class ParserMock {
     public calls = [] as [string, ...unknown[]][];
 
@@ -34,10 +34,6 @@ export class ParserMock {
 }
 mixCallRecorder(ParserMock);
 
-export function getParserMock(): ParserMock | undefined {
+export function getParserMock(): ParserMock {
     return parserMock;
-}
-
-export function clearParserMock(): void {
-    parserMock = undefined;
 }

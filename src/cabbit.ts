@@ -67,11 +67,7 @@ export class Cabbit extends EventEmitter {
 
             if (typeof opts === 'string') {
                 const url = new URL(opts);
-                if (url.searchParams.has('passive')) {
-                    passive = Boolean(url.searchParams.get('passive'));
-                } else {
-                    passive = false;
-                }
+                passive = url.searchParams.has('passive');
             } else {
                 passive = opts.passive === undefined ? false : opts.passive;
             }
@@ -82,7 +78,6 @@ export class Cabbit extends EventEmitter {
         this.client = new Client(chan, passive);
         this.client.on('setup', () => this.emit('setup'));
         this.client.on('setupFailed', err => this.emit('setupFailed', err));
-        this.client.on('unhandledMessage', (msg, queue) => this.emit('unhandledMessage', msg, queue));
         this.client.on('close', () => this.emit('close'));
     }
 

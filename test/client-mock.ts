@@ -1,6 +1,7 @@
 /* eslint-disable prefer-rest-params */
 import EventEmitter from 'events';
 
+import { ConsumeMessage as AmqplibMessage } from 'amqplib';
 import { ChannelWrapper } from '@artie-owlet/amqplib-wrapper';
 
 import { CallRecorder, mixCallRecorder } from './call-recorder';
@@ -8,11 +9,13 @@ import { CallRecorder, mixCallRecorder } from './call-recorder';
 // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-empty-interface
 export interface ClientMock extends CallRecorder {}
 
-let clientMock: ClientMock | undefined = undefined;
+type ConsumeCallback = (chanHandler: any, msg: AmqplibMessage | null) => void;
+
+let clientMock: ClientMock;
 export class ClientMock extends EventEmitter {
     public closed = false;
-
-    private tmpId = 0;
+    public namedConsumers = new Map<string, ConsumeCallback>();
+    public tmpConsumers = [] as ConsumeCallback[];
 
     constructor(
         public chanWrap: ChannelWrapper<any>,
@@ -26,13 +29,15 @@ export class ClientMock extends EventEmitter {
         this.recordCall(arguments);
     }
 
-    public declareQueue(): void {
-        this.recordCall(arguments);
+    public declareQueue(name: string, _: any, cb: ConsumeCallback): void {
+        this.recordCall(arguments, [2]);
+        this.namedConsumers.set(name, cb);
     }
 
-    public declareTmpQueue(): number {
-        this.recordCall(arguments);
-        return ++this.tmpId;
+    public declareTmpQueue(cb: ConsumeCallback): number {
+        this.recordCall(arguments, [0]);
+        this.tmpConsumers.push(cb);
+        return this.tmpConsumers.length;
     }
 
     public bindExchange(): void {
@@ -54,10 +59,6 @@ export class ClientMock extends EventEmitter {
 }
 mixCallRecorder(ClientMock);
 
-export function getClientMock(): ClientMock | undefined {
+export function getClientMock(): ClientMock {
     return clientMock;
-}
-
-export function clearClientMock(): void {
-    clientMock = undefined;
 }
