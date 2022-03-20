@@ -7,6 +7,11 @@
   "name": "cabbit API",
   "includeVersion": true,
   "disableSources": true,
+  "excludeExternals": true,
   "excludePrivate": true,
-  "excludeExternals": true
+  "excludeProtected": true,
+  "intentionallyNotExported": [],
+  "validation": {
+    "invalidLink": true
+  }
 }

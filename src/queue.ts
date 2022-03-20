@@ -3,6 +3,7 @@ import { ConsumeMessage as AmqplibMessage } from 'amqplib';
 import { Client, IArguments, IQueueOptions, IQueueOptionsStrict, IChannelHandler } from './client';
 import { ContentParser } from './content-parser';
 import {
+    Exchange,
     FanoutExchange,
     DirectExchange,
     TopicExchange,
@@ -12,6 +13,10 @@ import {
 } from './exchange';
 import { Message } from './message';
 
+/**
+ * Represents a middleware for consumed messages
+ * @typeParam T Type of message content
+ */
 export type ConsumeMiddleware<T> = (msg: Message<T>) => void;
 
 function mergeQueueOpts(opts: IQueueOptions | undefined, defaultOpts: IQueueOptionsStrict): IQueueOptionsStrict {
@@ -35,8 +40,10 @@ const namedQueueOptions: IQueueOptionsStrict = {
     },
 };
 
-type Exchange = FanoutExchange | DirectExchange | TopicExchange | HeadersExchange | CustomExchange;
-
+/**
+ * Represents a queue
+ * @typeParam T Type of message content
+ */
 export class Queue<T> {
     /**
      * @hidden
@@ -70,10 +77,25 @@ export class Queue<T> {
         }
     }
 
+    /**
+     * Subscribe to the fanout exchange
+     */
     public subscribe(ex: FanoutExchange): this;
+    /**
+     * Subscribe to the direct exchange
+     */
     public subscribe(ex: DirectExchange, routingKey: string | string[]): this;
+    /**
+     * Subscribe to the topic exchange
+     */
     public subscribe(ex: TopicExchange, routingKey: string | string[]): this;
+    /**
+     * Subscribe to the headers exchange
+     */
     public subscribe(ex: HeadersExchange, routingHeaders: IRoutingHeaders): this;
+    /**
+     * Subscribe to the exchange with custom type
+     */
     public subscribe(ex: CustomExchange, routingKey?: string, args?: IArguments): this;
     public subscribe(ex: Exchange, ...args: any[]): this {
         if (ex instanceof FanoutExchange) {

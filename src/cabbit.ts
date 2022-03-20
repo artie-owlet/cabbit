@@ -18,35 +18,58 @@ export interface ICabbitOptions extends IConnectOptions {
     passive?: boolean;
 }
 
+/**
+ * {@link Cabbit} events
+ */
 export interface ICabbitEvents {
+    /**
+     * The channel was closed. If {@link Cabbit.close} has not been called, Cabbit will try to create a new one
+     */
     close: () => void;
+    /**
+     * An error has occured in the channel or connection
+     */
     error: (err: Error) => void;
+    /**
+     * Routing successfully configured
+     */
     setup: () => void;
+    /**
+     * An error has occured during routing configuration
+     */
     setupFailed: (err: Error) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface Cabbit {
+    /** @hidden */
     on<E extends keyof ICabbitEvents>(event: E, listener: ICabbitEvents[E]): this;
+    /** @hidden */
     once<E extends keyof ICabbitEvents>(event: E, listener: ICabbitEvents[E]): this;
+    /** @hidden */
     addListener<E extends keyof ICabbitEvents>(event: E, listener: ICabbitEvents[E]): this;
+    /** @hidden */
     prependListener<E extends keyof ICabbitEvents>(event: E, listener: ICabbitEvents[E]): this;
+    /** @hidden */
     prependOnceListener<E extends keyof ICabbitEvents>(event: E, listener: ICabbitEvents[E]): this;
 }
 
+/**
+ * Handles a connection to the RabbitMQ server and provides an interface for creating exchanges and queues
+ */
 export class Cabbit extends EventEmitter {
     private conn?: ConnectionWrapper;
     private client: Client;
     private contentParser = new ContentParser();
 
     /**
-     * Start work, use existing connection
+     * Start work using an existing connection
      * @param conn see [amqplib-wrapper](https://artie-owlet.github.io/amqplib-wrapper/classes/ConnectionWrapper.html)
-     * @param passive see {@link IConsumeManagerOptions.passive}
+     * @param passive see {@link ICabbitOptions.passive}
      */
     constructor(conn: ConnectionWrapper, passive?: boolean);
     /**
-     * Start work, create own connection
+     * Start work, create your own connection
      * @param connectOptions
      * @param socketOptions
      */
@@ -82,11 +105,11 @@ export class Cabbit extends EventEmitter {
     }
 
     /**
-     * Create named queue and start consume to provided middleware
+     * Create a named queue and start consuming in the provided middleware
      */
     public queue<T = any>(name: string, mw: ConsumeMiddleware<T>, opts?: IQueueOptions): Queue<T>;
     /**
-     * Create temporary queue and start consume to provided middleware
+     * Create a temporary queue and start consuming in the provided middleware
      */
     public queue<T = any>(mw: ConsumeMiddleware<T>, noAck?: boolean): Queue<T>;
     public queue<T = any>(...args: any[]): Queue<T> {
@@ -103,42 +126,42 @@ export class Cabbit extends EventEmitter {
     }
 
     /**
-     * Create fanout exchange
+     * Create a fanout exchange
      */
     public fanout(name: string, options?: IExchangeOptions): FanoutExchange {
         return new FanoutExchange(this.client, this.contentParser, name, options);
     }
 
     /**
-     * Create direct exchange
+     * Create a direct exchange
      */
     public direct(name: string, options?: IExchangeOptions): DirectExchange {
         return new DirectExchange(this.client, this.contentParser, name, options);
     }
 
     /**
-     * Create topic exchange
+     * Create a topic exchange
      */
     public topic(name: string, options?: IExchangeOptions): TopicExchange {
         return new TopicExchange(this.client, this.contentParser, name, options);
     }
 
     /**
-     * Create headers exchange
+     * Create a headers exchange
      */
     public headers(name: string, options?: IExchangeOptions): HeadersExchange {
         return new HeadersExchange(this.client, this.contentParser, name, options);
     }
 
     /**
-     * Create exchange with custom type
+     * Create an exchange with custom type
      */
     public exchange(name: string, exType: string, options?: IExchangeOptions): CustomExchange {
         return new CustomExchange(this.client, this.contentParser, name, exType, options);
     }
 
     /**
-     * Finish work, close underlying channel
+     * Finish work, close the underlying channel
      */
     public async close(): Promise<void> {
         if (this.conn) {

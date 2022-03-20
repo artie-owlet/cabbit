@@ -3,6 +3,10 @@ import { ConsumeMessage as AmqplibMessage, ConsumeMessageFields, MessageProperti
 import { IChannelHandler } from './client';
 import { ContentParser } from './content-parser';
 
+/**
+ * Represents an AMQP message
+ * @typeParam T Type of message content
+ */
 export class Message<T> {
     /**
      * Decoded and parsed message body
@@ -13,11 +17,11 @@ export class Message<T> {
      */
     public readonly parseError?: string;
     /**
-     * Message fields
+     * Message fields. See [amqplib](https://amqp-node.github.io/amqplib/channel_api.html#channel_consume) docs
      */
     public readonly fields: ConsumeMessageFields;
     /**
-     * Message properties
+     * Message properties. See [amqplib](https://amqp-node.github.io/amqplib/channel_api.html#channel_publish) docs
      */
     public readonly properties: MessageProperties;
     /**
@@ -48,7 +52,7 @@ export class Message<T> {
     }
 
     /**
-     * Acknowledge message
+     * Acknowledge the message
      * @param allUpTo acknowledge all unacknowledged messages consumed before (default false)
      */
     public ack(allUpTo = false): boolean {
@@ -60,9 +64,9 @@ export class Message<T> {
     }
 
     /**
-     * Reject message
+     * Reject the message
      * @param allUpTo reject all unacknowledged messages consumed before (default false)
-     * @param requeue push rejected message(s) back on the queue(s) they came from (default false)
+     * @param requeue push rejected messages back on the queue they came from (default false)
      */
     public nack(allUpTo = false, requeue = false): boolean {
         if (this.chanHandler.chan) {

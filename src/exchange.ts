@@ -2,15 +2,23 @@ import { Client, IArguments, IExchangeOptions } from './client';
 import { ContentParser } from './content-parser';
 import { ConsumeMiddleware, Queue } from './queue';
 
+export type Exchange = FanoutExchange | DirectExchange | TopicExchange | HeadersExchange | CustomExchange;
+
+/**
+ * Headers for binding to the headers exchange
+ */
 export interface IRoutingHeaders extends IArguments {
     'x-match': 'all' | 'any';
 }
 
 class BaseExchange {
+    /** @hidden */
+    public readonly name: string;
+
     constructor(
         private client: Client,
         private parser: ContentParser,
-        public readonly name: string,
+        name: string,
         exType: string,
         opts: IExchangeOptions | undefined,
     ) {
@@ -19,9 +27,10 @@ class BaseExchange {
             durable: true,
             autoDelete: false,
         }, opts));
+        this.name = name;
     }
 
-    protected bindImpl(dest: BaseExchange | Queue<any>, routingKey: string, args?: IArguments): void {
+    protected bindImpl(dest: Exchange | Queue<any>, routingKey: string, args?: IArguments): void {
         if (dest instanceof BaseExchange) {
             this.client.bindExchange(this.name, dest.name, routingKey, args);
         } else {
@@ -58,7 +67,11 @@ class BaseExchange {
     }
 }
 
+/**
+ * Represents a fanout exchange
+ */
 export class FanoutExchange extends BaseExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -68,11 +81,20 @@ export class FanoutExchange extends BaseExchange {
         super(client, parser, name, 'fanout', opts);
     }
 
-    public bind(dest: BaseExchange | Queue<any>): void {
+    /**
+     * Bind an exchange or queue
+     */
+    public bind(dest: Exchange | Queue<any>): void {
         this.bindImpl(dest, '');
     }
 
+    /**
+     * Create and bind a named queue and start consuming in the provided middleware
+     */
     public consume<T>(name: string, mw: ConsumeMiddleware<T>): void;
+    /**
+     * Create and bind a temporary queue and start consuming in the provided middleware
+     */
     public consume<T>(mw: ConsumeMiddleware<T>): void;
     public consume<T>(...args: any[]): void {
         let queue: Queue<T>;
@@ -84,30 +106,45 @@ export class FanoutExchange extends BaseExchange {
         this.bind(queue);
     }
 
+    /**
+     * Create and bind an internal fanout exchange
+     */
     public fanout(name: string): FanoutExchange {
         const ex = this.internalFanout(name);
         this.bind(ex);
         return ex;
     }
 
+    /**
+     * Create and bind an internal direct exchange
+     */
     public direct(name: string): DirectExchange {
         const ex = this.internalDirect(name);
         this.bind(ex);
         return ex;
     }
 
+    /**
+     * Create and bind an internal topic exchange
+     */
     public topic(name: string): TopicExchange {
         const ex = this.internalTopic(name);
         this.bind(ex);
         return ex;
     }
 
+    /**
+     * Create and bind an internal headers exchange
+     */
     public headers(name: string): HeadersExchange {
         const ex = this.internalHeaders(name);
         this.bind(ex);
         return ex;
     }
 
+    /**
+     * Create and bind an internal exchange with custom type
+     */
     public exchange(name: string, exType: string): CustomExchange {
         const ex = this.internalCustom(name, exType);
         this.bind(ex);
@@ -116,6 +153,7 @@ export class FanoutExchange extends BaseExchange {
 }
 
 class StringRoutingExchange extends BaseExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -126,14 +164,26 @@ class StringRoutingExchange extends BaseExchange {
         super(client, parser, name, exType, opts);
     }
 
-    public bind(dest: BaseExchange | Queue<any>, routingKey: string | string[]): void {
+    /**
+     * Bind an exchange or queue
+     * @param routingKey Single routing key or list of routing keys
+     */
+    public bind(dest: Exchange | Queue<any>, routingKey: string | string[]): void {
         if (typeof routingKey === 'string') {
             routingKey = [routingKey];
         }
         routingKey.forEach(rk => this.bindImpl(dest, rk));
     }
 
+    /**
+     * Create and bind a named queue and start consuming in the provided middleware
+     * @param routingKey Single routing key or list of routing keys
+     */
     public consume<T>(name: string, mw: ConsumeMiddleware<T>, routingKey: string | string[]): void;
+    /**
+     * Create and bind a temporary queue and start consuming in the provided middleware
+     * @param routingKey Single routing key or list of routing keys
+     */
     public consume<T>(mw: ConsumeMiddleware<T>, routingKey: string | string[]): void;
     public consume<T>(...args: any[]): void {
         let queue: Queue<T>;
@@ -148,30 +198,50 @@ class StringRoutingExchange extends BaseExchange {
         this.bind(queue, routingKey);
     }
 
+    /**
+     * Create and bind an internal fanout exchange
+     * @param routingKey Single routing key or list of routing keys
+     */
     public fanout(name: string, routingKey: string | string[]): FanoutExchange {
         const ex = this.internalFanout(name);
         this.bind(ex, routingKey);
         return ex;
     }
 
+    /**
+     * Create and bind an internal direct exchange
+     * @param routingKey Single routing key or list of routing keys
+     */
     public direct(name: string, routingKey: string | string[]): DirectExchange {
         const ex = this.internalDirect(name);
         this.bind(ex, routingKey);
         return ex;
     }
 
+    /**
+     * Create and bind an internal topic exchange
+     * @param routingKey Single routing key or list of routing keys
+     */
     public topic(name: string, routingKey: string | string[]): TopicExchange {
         const ex = this.internalTopic(name);
         this.bind(ex, routingKey);
         return ex;
     }
 
+    /**
+     * Create and bind an internal headers exchange
+     * @param routingKey Single routing key or list of routing keys
+     */
     public headers(name: string, routingKey: string | string[]): HeadersExchange {
         const ex = this.internalHeaders(name);
         this.bind(ex, routingKey);
         return ex;
     }
 
+    /**
+     * Create and bind an internal exchange with custom type
+     * @param routingKey Single routing key or list of routing keys
+     */
     public exchange(name: string, exType: string, routingKey: string | string[]): CustomExchange {
         const ex = this.internalCustom(name, exType);
         this.bind(ex, routingKey);
@@ -179,7 +249,11 @@ class StringRoutingExchange extends BaseExchange {
     }
 }
 
+/**
+ * Represents a direct exchange
+ */
 export class DirectExchange extends StringRoutingExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -190,7 +264,11 @@ export class DirectExchange extends StringRoutingExchange {
     }
 }
 
+/**
+ * Represents a topic exchange
+ */
 export class TopicExchange extends StringRoutingExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -201,7 +279,11 @@ export class TopicExchange extends StringRoutingExchange {
     }
 }
 
+/**
+ * Represents a headers exchange
+ */
 export class HeadersExchange extends BaseExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -211,11 +293,20 @@ export class HeadersExchange extends BaseExchange {
         super(client, parser, name, 'headers', opts);
     }
 
-    public bind(dest: BaseExchange | Queue<any>, routingHeaders: IRoutingHeaders): void {
+    /**
+     * Bind an exchange or queue
+     */
+    public bind(dest: Exchange | Queue<any>, routingHeaders: IRoutingHeaders): void {
         this.bindImpl(dest, '', routingHeaders);
     }
 
+    /**
+     * Create and bind a named queue and start consuming in the provided middleware
+     */
     public consume<T>(name: string, mw: ConsumeMiddleware<T>, routingHeaders: IRoutingHeaders): void;
+    /**
+     * Create and bind a temporary queue and start consuming in the provided middleware
+     */
     public consume<T>(mw: ConsumeMiddleware<T>, routingHeaders: IRoutingHeaders): void;
     public consume<T>(...args: any[]): void {
         let queue: Queue<T>;
@@ -230,30 +321,45 @@ export class HeadersExchange extends BaseExchange {
         this.bind(queue, routingHeaders);
     }
 
+    /**
+     * Create and bind an internal fanout exchange
+     */
     public fanout(name: string, routingHeaders: IRoutingHeaders): FanoutExchange {
         const ex = this.internalFanout(name);
         this.bind(ex, routingHeaders);
         return ex;
     }
 
+    /**
+     * Create and bind an internal direct exchange
+     */
     public direct(name: string, routingHeaders: IRoutingHeaders): DirectExchange {
         const ex = this.internalDirect(name);
         this.bind(ex, routingHeaders);
         return ex;
     }
 
+    /**
+     * Create and bind an internal topic exchange
+     */
     public topic(name: string, routingHeaders: IRoutingHeaders): TopicExchange {
         const ex = this.internalTopic(name);
         this.bind(ex, routingHeaders);
         return ex;
     }
 
+    /**
+     * Create and bind an internal headers exchange
+     */
     public headers(name: string, routingHeaders: IRoutingHeaders): HeadersExchange {
         const ex = this.internalHeaders(name);
         this.bind(ex, routingHeaders);
         return ex;
     }
 
+    /**
+     * Create and bind an internal exchange with custom type
+     */
     public exchange(name: string, exType: string, routingHeaders: IRoutingHeaders): CustomExchange {
         const ex = this.internalCustom(name, exType);
         this.bind(ex, routingHeaders);
@@ -261,7 +367,11 @@ export class HeadersExchange extends BaseExchange {
     }
 }
 
+/**
+ * Represents an exchange with custom type
+ */
 export class CustomExchange extends BaseExchange {
+    /** @hidden */
     constructor(
         client: Client,
         parser: ContentParser,
@@ -272,11 +382,20 @@ export class CustomExchange extends BaseExchange {
         super(client, parser, name, exType, opts);
     }
 
-    public bind(dest: BaseExchange | Queue<any>, routingKey?: string, args?: IArguments): void {
+    /**
+     * Bind an exchange or queue
+     */
+    public bind(dest: Exchange | Queue<any>, routingKey?: string, args?: IArguments): void {
         this.bindImpl(dest, routingKey || '', args);
     }
 
+    /**
+     * Create and bind a named queue and start consuming in the provided middleware
+     */
     public consume<T>(name: string, mw: ConsumeMiddleware<T>, routingKey?: string, routingArgs?: IArguments): void;
+    /**
+     * Create and bind a temporary queue and start consuming in the provided middleware
+     */
     public consume<T>(mw: ConsumeMiddleware<T>, routingKey?: string, routingArgs?: IArguments): void;
     public consume<T>(...args: any[]): void {
         let queue: Queue<T>;
@@ -294,30 +413,45 @@ export class CustomExchange extends BaseExchange {
         this.bind(queue, routingKey, routingArgs);
     }
 
+    /**
+     * Create and bind an internal fanout exchange
+     */
     public fanout(name: string, routingKey?: string, args?: IArguments): FanoutExchange {
         const ex = this.internalFanout(name);
         this.bind(ex, routingKey, args);
         return ex;
     }
 
+    /**
+     * Create and bind an internal direct exchange
+     */
     public direct(name: string, routingKey?: string, args?: IArguments): DirectExchange {
         const ex = this.internalDirect(name);
         this.bind(ex, routingKey, args);
         return ex;
     }
 
+    /**
+     * Create and bind an internal topic exchange
+     */
     public topic(name: string, routingKey?: string, args?: IArguments): TopicExchange {
         const ex = this.internalTopic(name);
         this.bind(ex, routingKey, args);
         return ex;
     }
 
+    /**
+     * Create and bind an internal headers exchange
+     */
     public headers(name: string, routingKey?: string, args?: IArguments): HeadersExchange {
         const ex = this.internalHeaders(name);
         this.bind(ex, routingKey, args);
         return ex;
     }
 
+    /**
+     * Create and bind an internal exchange with custom type
+     */
     public exchange(name: string, exType: string, routingKey?: string, args?: IArguments): CustomExchange {
         const ex = this.internalCustom(name, exType);
         this.bind(ex, routingKey, args);

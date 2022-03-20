@@ -1,7 +1,14 @@
 export { Cabbit, ICabbitEvents, ICabbitOptions } from './cabbit';
-export { IExchangeOptions, IQueueOptions } from './client';
+export {
+    IArguments,
+    IExchangeOptions,
+    IQueueConsumeOptions,
+    IQueueDeclareOptions,
+    IQueueOptions,
+} from './client';
 export { ContentDecoder, ContentMimeTypeParser } from './content-parser';
 export {
+    Exchange,
     FanoutExchange,
     DirectExchange,
     TopicExchange,

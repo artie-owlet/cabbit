@@ -1,26 +1,49 @@
 import EventEmitter from 'events';
 
 import { ChannelWrapper } from '@artie-owlet/amqplib-wrapper';
-import { Channel, ConsumeMessage as AmqplibMessage, Options as AmqplibOptions } from 'amqplib';
+import { Channel, ConsumeMessage as AmqplibMessage } from 'amqplib';
 
 type PartlyRequired<T, R extends keyof T> = Required<Pick<T, R>> & Omit<T, R>;
 
+/**
+ * Represents [AMQP table](https://www.rabbitmq.com/amqp-0-9-1-reference.html#domain.table)
+ */
 export interface IArguments {
     [key: string]: any;
 }
 
-export type IExchangeOptions = Pick<AmqplibOptions.AssertExchange, 'durable' | 'autoDelete' | 'internal'> & {
+/**
+ * Represents [exchange.declare](https://www.rabbitmq.com/amqp-0-9-1-reference.html#exchange.declare) arguments
+ */
+export interface IExchangeOptions {
+    durable?: boolean;
+    internal?: boolean;
+    autoDelete?: boolean;
     arguments?: IArguments;
-};
+}
 
 export type IExchangeOptionsStrict = PartlyRequired<IExchangeOptions, 'durable' | 'autoDelete' | 'internal'>;
 
-type IQueueDeclareOptions = Pick<AmqplibOptions.AssertQueue, 'durable' | 'autoDelete'> & {
+/**
+ * Represents [exchange.declare](https://www.rabbitmq.com/amqp-0-9-1-reference.html#queue.declare) arguments
+ */
+export interface IQueueDeclareOptions {
+    durable?: boolean;
+    autoDelete?: boolean;
     arguments?: IArguments;
-};
-type IQueueConsumeOptions = Pick<AmqplibOptions.Consume, 'consumerTag' | 'noAck' | 'exclusive' | 'priority'> & {
+}
+
+/**
+ * Represents [exchange.declare](https://www.rabbitmq.com/amqp-0-9-1-reference.html#basic.consume) arguments
+ */
+export interface IQueueConsumeOptions {
+    consumerTag?: string;
+    noAck?: boolean;
+    exclusive?: boolean;
+    priority?: number;
     arguments?: IArguments;
-};
+}
+
 export interface IQueueOptions {
     declare?: IQueueDeclareOptions;
     consume?: IQueueConsumeOptions;

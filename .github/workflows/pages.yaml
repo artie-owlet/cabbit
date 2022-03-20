@@ -1,12 +1,11 @@
-name: lint
+name: Pages
 on:
   push:
-    branches-ignore:
-      - 'save'
-      - 'save-*'
+    branches:
+      - 'master'
   pull_request:
 jobs:
-  lint:
+  CI:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,4 +14,8 @@ jobs:
           node-version: '16'
       - run: |
           npm ci
-          npm run lint
+          npm run doc
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
