@@ -147,7 +147,7 @@ graph LR
 cabbit.queue('test_queue', (msg) => {
     // handle message
     msg.ack();
-}).subscribe(cabbit.direct('ex1', 'key')).subscribe(cabbit.fanout('ex2'));
+}).subscribe(cabbit.direct('ex1'), 'key').subscribe(cabbit.fanout('ex2'));
 ```
 
 ## API
