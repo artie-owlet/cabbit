@@ -1,0 +1,17 @@
+{
+  "entryPoints": [
+    "./src/index.ts"
+  ],
+  "readme": "none",
+  "out": "./public",
+  "name": "cabbit API",
+  "includeVersion": true,
+  "disableSources": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "intentionallyNotExported": [],
+  "validation": {
+    "invalidLink": true
+  }
+}
